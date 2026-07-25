@@ -1,0 +1,14 @@
+[project]
+name = "agent-course-enterprise-after-sales-mcp"
+version = "0.1.0"
+description = "Python implementation of the enterprise after-sales MCP lesson"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.28.1,<1",
+    "mcp==2.0.0b1",
+    "starlette>=0.47.2,<1",
+    "uvicorn>=0.35.0,<1",
+]
+
+[tool.uv]
+prerelease = "allow"
