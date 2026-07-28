@@ -1,0 +1,17 @@
+{
+	"name": "02-react-incident-agent",
+	"version": "1.0.0",
+	"private": true,
+	"description": "使用 DeepSeek Tool Calls 演示 ReAct 的 Action 与 Observation 执行过程",
+	"scripts": {
+		"demo": "node --env-file=.env demo.js release-regression",
+		"demo:database": "node --env-file=.env demo.js database-pool",
+		"check": "node --check demo.js && node --check react-agent.js && node --check deepseek-client.js && node --check incident-tools.js && node --check incident-data.js"
+	},
+	"engines": {
+		"node": ">=20.6.0"
+	},
+	"dependencies": {
+		"zod": "^4.4.3"
+	}
+}
