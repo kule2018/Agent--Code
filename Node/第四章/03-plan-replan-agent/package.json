@@ -1,0 +1,17 @@
+{
+	"name": "03-plan-replan-agent",
+	"version": "1.0.0",
+	"private": true,
+	"description": "使用原生 Node.js 演示 Agent 的任务规划、计划状态与重新规划",
+	"scripts": {
+		"demo": "node --env-file=.env demo.js",
+		"check": "node --check demo.js && node --check deepseek-client.js && node --check incident-data.js && node --check incident-tools.js && node --check plan-schema.js && node --check plan-state.js && node --check planner.js && node --check plan-agent.js"
+	},
+	"engines": {
+		"node": ">=20.6.0"
+	},
+	"dependencies": {
+		"zod": "^4.4.3"
+	}
+}
+
