@@ -1,0 +1,6 @@
+{
+	"name": "task-service-workspace",
+	"version": "1.0.0",
+	"private": true,
+	"description": "供软件开发 Agent 修改和验证的 NestJS 示例项目"
+}
