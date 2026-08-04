@@ -1,0 +1,17 @@
+{
+	"name": "05-result-validation-recovery",
+	"version": "1.0.0",
+	"private": true,
+	"description": "使用原生 Node.js 演示 Agent 结果校验与失败恢复策略",
+	"scripts": {
+		"demo": "node demo.js",
+		"demo:retry-fallback": "node demo.js retry-fallback",
+		"demo:replan": "node demo.js replan",
+		"demo:handoff": "node demo.js handoff",
+		"check": "node --check demo.js && node --check recovery-runtime.js && node --check recovery-state.js && node --check recovery-policy.js && node --check result-validator.js && node --check incident-tools.js && node --check incident-data.js",
+		"test": "node test.js"
+	},
+	"engines": {
+		"node": ">=20.19.0"
+	}
+}
