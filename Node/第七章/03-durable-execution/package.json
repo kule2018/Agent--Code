@@ -1,0 +1,26 @@
+{
+	"name": "03-durable-execution",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "使用 LangGraph Checkpoint 验证服务重启后的工作流恢复",
+	"scripts": {
+		"db:up": "docker compose up -d --wait",
+		"db:down": "docker compose down",
+		"reset": "node durable-workflow.js reset",
+		"start": "node durable-workflow.js start",
+		"status": "node durable-workflow.js status",
+		"resume": "node durable-workflow.js resume",
+		"demo": "npm run reset && npm run start && npm run status && npm run resume",
+		"test": "node --test durable-workflow.test.js",
+		"check": "node --check workflow.js && node --check durable-workflow.js"
+	},
+	"engines": {
+		"node": ">=20.6.0"
+	},
+	"dependencies": {
+		"@langchain/langgraph": "1.4.15",
+		"@langchain/langgraph-checkpoint-postgres": "1.0.5",
+		"zod": "4.6.5"
+	}
+}

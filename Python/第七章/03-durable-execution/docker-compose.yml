@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: agent-workflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agent_workflow
+      POSTGRES_USER: agent_course
+      POSTGRES_PASSWORD: agent_course
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent_course -d agent_workflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - agent-workflow-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  agent-workflow-postgres-data:
