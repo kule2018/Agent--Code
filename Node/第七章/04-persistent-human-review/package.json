@@ -1,0 +1,28 @@
+{
+	"name": "04-persistent-human-review",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "使用 LangGraph interrupt 和 Command 实现可持久化人工审核",
+	"scripts": {
+		"db:up": "docker compose up -d --wait",
+		"db:down": "docker compose down",
+		"reset": "node review-workflow.js reset",
+		"start": "node review-workflow.js start",
+		"status": "node review-workflow.js status",
+		"approve": "node review-workflow.js approve",
+		"revise": "node review-workflow.js revise",
+		"reject": "node review-workflow.js reject",
+		"approve:stale": "node review-workflow.js approve-stale",
+		"test": "node --test review-workflow.test.js",
+		"check": "node --check workflow.js && node --check review-workflow.js"
+	},
+	"engines": {
+		"node": ">=20.6.0"
+	},
+	"dependencies": {
+		"@langchain/langgraph": "1.4.15",
+		"@langchain/langgraph-checkpoint-postgres": "1.0.5",
+		"zod": "4.6.5"
+	}
+}
