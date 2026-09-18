@@ -1,0 +1,21 @@
+[project]
+name = "agent-course-partial-success-local-redo-python"
+version = "0.1.0"
+description = "Partial success, local redo, and export validation with LangGraph"
+requires-python = ">=3.11"
+dependencies = [
+    "langgraph==1.2.11",
+    "langgraph-checkpoint-postgres==3.1.2",
+    "psycopg[binary,pool]==3.3.5",
+    "typing-extensions==4.15.0",
+]
+
+[build-system]
+requires = ["setuptools>=80", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = [
+    "partial_generation",
+    "workflow",
+]

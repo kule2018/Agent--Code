@@ -1,0 +1,28 @@
+{
+	"name": "05-partial-success-local-redo",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "演示页面制作任务的部分成功、失败续做、局部重做与版本校验",
+	"scripts": {
+		"db:up": "docker compose up -d --wait",
+		"db:down": "docker compose down",
+		"reset": "node partial-generation.js reset",
+		"start": "node partial-generation.js start",
+		"status": "node partial-generation.js status",
+		"continue": "node partial-generation.js continue",
+		"revise:page": "node partial-generation.js revise-page",
+		"outline:v2": "node partial-generation.js outline-v2",
+		"export": "node partial-generation.js export",
+		"test": "node --test partial-generation.test.js",
+		"check": "node --check workflow.js && node --check partial-generation.js"
+	},
+	"engines": {
+		"node": ">=20.6.0"
+	},
+	"dependencies": {
+		"@langchain/langgraph": "1.4.15",
+		"@langchain/langgraph-checkpoint-postgres": "1.0.5",
+		"zod": "4.6.5"
+	}
+}
