@@ -356,6 +356,13 @@ export class PresentationGraphService implements OnModuleInit, OnModuleDestroy {
 		// 防止用户审核了已经过期的大纲版本。
 		aggregate.assertReviewable(decision.outlineVersion)
 
+		// “增加一页”“调整受众”等反馈会改变全局制作要求。
+		// 先把自然语言转换成明确的 nextRequirements，后续节点再按新要求生成大纲。
+		const nextRequirements =
+			decision.decision === 'revise'
+				? await this.planOutlineRevision(aggregate, decision.feedback)
+				: null
+
 		// 用户批准当前大纲。
 		// 更新领域状态，并保存最新聚合。
 		if (decision.decision === 'approve') {
@@ -385,9 +392,32 @@ export class PresentationGraphService implements OnModuleInit, OnModuleDestroy {
 			// 后续 revise_outline 节点会使用。
 			reviewFeedback: decision.feedback,
 
+			// 如果反馈改变了主题、受众或页数，
+			// 将新的制作要求交给 revise_outline。
+			nextRequirements,
+
 			// 记录 Agent 执行轨迹，方便调试和查看流程。
 			executionPath: [...state.executionPath, `review:${decision.decision}`]
 		}
+	}
+
+	/** 将审核阶段的自然语言反馈转换成可执行的全局制作要求。 */
+	private async planOutlineRevision(
+		aggregate: PresentationAggregate,
+		feedback: string
+	): Promise<EditablePresentationRequirements | null> {
+		const presentation = aggregate.toJSON()
+		const provider = this.models.getProvider(presentation.modelMode)
+		const plan = await provider.planChange({
+			instruction: feedback,
+			presentation
+		})
+
+		if (plan.scope !== 'global_content') return null
+		if (!plan.nextRequirements) {
+			throw new Error('大纲修改计划缺少新的全局制作要求。')
+		}
+		return plan.nextRequirements
 	}
 
 	// 根据用户的大纲审核结果，决定工作流下一步执行哪个节点。
