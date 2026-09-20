@@ -1,0 +1,52 @@
+{
+	"name": "06-ai-presentation-agent",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "第七章综合实战：支持持久化审核、失败续做、局部重做与 PPTX 导出的 AI 演示文稿制作 Agent",
+	"scripts": {
+		"dev": "concurrently -k -n server,web -c blue,green \"npm:dev:server\" \"npm:dev:web\"",
+		"dev:server": "tsx watch --tsconfig server/tsconfig.json server/src/main.ts",
+		"dev:web": "vite --config web/vite.config.ts",
+		"build": "npm run build:server && npm run build:web",
+		"build:server": "tsc -p server/tsconfig.json",
+		"build:web": "vite build --config web/vite.config.ts",
+		"check": "tsc -p server/tsconfig.json --noEmit && vue-tsc -p web/tsconfig.json --noEmit",
+		"test": "vitest run --config vitest.config.mts",
+		"setup": "tsx server/src/scripts/setup-storage.ts",
+		"doctor": "tsx server/src/scripts/doctor.ts",
+		"start": "node dist/server/main.js"
+	},
+	"engines": {
+		"node": ">=20.19.0"
+	},
+	"dependencies": {
+		"@langchain/core": "1.2.5",
+		"@langchain/deepseek": "1.1.6",
+		"@langchain/langgraph": "1.4.15",
+		"@langchain/langgraph-checkpoint-postgres": "1.0.5",
+		"@lucide/vue": "^1.27.0",
+		"@nestjs/common": "^11.1.6",
+		"@nestjs/core": "^11.1.6",
+		"@nestjs/platform-express": "^11.1.6",
+		"dotenv": "^17.2.2",
+		"pg": "^8.16.3",
+		"pptxgenjs": "4.0.1",
+		"reflect-metadata": "^0.2.2",
+		"rxjs": "^7.8.2",
+		"vue": "^3.5.0",
+		"zod": "4.6.5"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.3",
+		"@types/node": "^22.18.1",
+		"@types/pg": "^8.15.5",
+		"@vitejs/plugin-vue": "^6.0.0",
+		"concurrently": "^9.2.1",
+		"tsx": "^4.20.5",
+		"typescript": "^5.9.2",
+		"vite": "^7.1.5",
+		"vitest": "^3.2.4",
+		"vue-tsc": "^3.0.0"
+	}
+}

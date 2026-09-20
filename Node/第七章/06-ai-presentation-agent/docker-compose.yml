@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: presentation-agent-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: presentation_course
+      POSTGRES_PASSWORD: presentation_course
+      POSTGRES_DB: presentation_agent
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U presentation_course -d presentation_agent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - presentation_agent_data:/var/lib/postgresql/data
+
+volumes:
+  presentation_agent_data:
+

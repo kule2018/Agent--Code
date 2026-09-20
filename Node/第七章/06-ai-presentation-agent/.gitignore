@@ -1,0 +1,5 @@
+node_modules
+dist
+data/exports/*.pptx
+.DS_Store
+
