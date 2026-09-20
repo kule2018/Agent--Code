@@ -25,19 +25,36 @@ export class PresentationRepository implements OnModuleDestroy {
 		`)
 	}
 
+	// 保存演示文稿聚合状态到数据库
 	async save(presentation: Presentation): Promise<void> {
+		// 执行数据库写入操作，将领域对象转换为可持久化的数据结构
 		await this.pool.query(
+			// 使用 PostgreSQL 的 UPSERT 语法：
+			// 如果 id 不存在则执行 INSERT，
+			// 如果 id 已存在则执行 UPDATE，保证同一个任务只维护最新状态。
 			`INSERT INTO presentations (id, thread_id, data, created_at, updated_at)
-			 VALUES ($1, $2, $3::jsonb, $4, $5)
-			 ON CONFLICT (id) DO UPDATE
-			 SET thread_id = EXCLUDED.thread_id,
-			     data = EXCLUDED.data,
-			     updated_at = EXCLUDED.updated_at`,
+		 VALUES ($1, $2, $3::jsonb, $4, $5)
+		 ON CONFLICT (id) DO UPDATE
+		 SET thread_id = EXCLUDED.thread_id,
+		     data = EXCLUDED.data,
+		     updated_at = EXCLUDED.updated_at`,
+
 			[
+				// 演示文稿唯一 ID，用于定位具体制作任务
 				presentation.id,
+
+				// LangGraph 工作流对应的 thread_id，
+				// 用于后续恢复 Agent 执行状态
 				presentation.threadId,
+
+				// 将完整领域对象序列化为 JSON，
+				// 保存演示文稿需求、大纲、状态等业务数据
 				JSON.stringify(presentation),
+
+				// 创建时间
 				presentation.createdAt,
+
+				// 最近更新时间
 				presentation.updatedAt
 			]
 		)

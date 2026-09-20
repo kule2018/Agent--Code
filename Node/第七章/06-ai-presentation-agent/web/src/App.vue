@@ -156,11 +156,33 @@ async function loadTasks(preferredId?: string) {
 	}
 }
 
+// 选择一个演示文稿任务。
+// 该方法负责加载任务详情、清理旧状态，并根据任务当前进度切换页面。
 async function selectTask(task: Presentation) {
+	// 清空之前可能存在的错误提示，
+	// 避免切换任务后仍显示旧任务的错误信息。
 	error.value = ''
+
+	// 清除上一次页面修改方案，
+	// 防止不同任务之间复用旧的修改状态。
 	lastChangePlan.value = null
+
+	// 根据任务 ID 从后端重新获取最新任务数据。
+	// 不直接使用列表中的 task 对象，
+	// 保证拿到最新的大纲、页面生成状态等完整信息。
 	selected.value = await api.get(task.id)
+
+	// 清空当前选中的页面。
+	// 因为切换任务后，需要重新选择当前任务中的页面。
 	selectedPageId.value = null
+
+	// 根据任务当前状态决定默认打开的视图：
+	//
+	// 如果已经生成页面：
+	//    → 进入页面查看/编辑模式
+	//
+	// 如果还没有页面：
+	//    → 停留在大纲审核阶段
 	activeView.value = selected.value.pages.length ? 'pages' : 'outline'
 }
 
