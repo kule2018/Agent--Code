@@ -565,36 +565,101 @@ export class PresentationGraphService implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 
+	/**
+	 * 准备页面制作任务。
+	 *
+	 * 1. 加载当前演示文稿聚合对象。
+	 * 2. 根据当前大纲创建对应的页面任务队列。
+	 * 3. 保存最新的领域状态。
+	 * 4. 返回待处理页面列表，交给后续节点逐个制作。
+	 */
 	private readonly preparePages = async (state: WorkflowValue) => {
+		// 根据 presentationId 加载当前演示文稿聚合对象
 		const aggregate = await this.load(state.presentationId)
+
+		// 根据当前大纲生成页面制作任务
+		// 如果页面任务已经存在，则由领域模型内部保证不会重复创建
 		aggregate.ensurePageTasks()
+
+		// 持久化页面任务状态
 		await this.repository.save(aggregate.toJSON())
+
 		return {
+			// 获取还未完成制作的页面 ID，作为后续页面制作队列
 			queue: aggregate.getPendingPageIds(),
+
+			// 当前还没有开始制作任何页面
 			currentPageId: null,
+
+			// 记录当前节点执行轨迹，方便调试和流程追踪
 			executionPath: [...state.executionPath, 'prepare_pages']
 		}
 	}
 
+	/**
+	 * 准备工作流继续执行时的页面任务队列。
+	 *
+	 * 主要负责：
+	 * 1. 重新加载当前演示文稿聚合状态。
+	 * 2. 获取仍未完成的页面任务。
+	 * 3. 重置当前执行页面，让工作流重新从队列中选择页面继续处理。
+	 *
+	 * 常用于：
+	 * - 页面生成过程中断后的恢复。
+	 * - 部分页面失败后的重新执行。
+	 * - 用户修改部分页面后继续生成。
+	 */
 	private readonly prepareContinue = async (state: WorkflowValue) => {
+		// 加载当前演示文稿聚合对象，获取最新页面状态
 		const aggregate = await this.load(state.presentationId)
+
 		return {
+			// 根据最新状态重新获取待处理页面队列
+			// 包括 pending、failed、stale 等需要继续处理的页面
 			queue: aggregate.getPendingPageIds(),
+
+			// 清空当前页面，让后续节点重新选择目标页面
 			currentPageId: null,
+
+			// 记录工作流恢复执行路径，方便调试和状态追踪
 			executionPath: [...state.executionPath, 'prepare_continue']
 		}
 	}
 
+	/**
+	 * 准备单个页面的重新制作任务。
+	 *
+	 * 主要负责：
+	 * 1. 校验用户是否指定了需要修改的页面和修改要求。
+	 * 2. 更新领域模型中的页面修改请求。
+	 * 3. 保存最新页面状态。
+	 * 4. 将目标页面加入执行队列，等待后续重新生成。
+	 */
 	private readonly preparePageRevision = async (state: WorkflowValue) => {
+		// 单页修改必须同时包含目标页面 ID 和修改要求
 		if (!state.targetPageId || !state.changeRequest) {
 			throw new Error('单页修改缺少 pageId 或修改要求。')
 		}
+
+		// 加载当前演示文稿聚合对象
 		const aggregate = await this.load(state.presentationId)
+
+		// 通过领域方法记录页面修改请求
+		// 不直接修改字段，保证页面状态变化符合领域规则
 		aggregate.requestPageRevision(state.targetPageId, state.changeRequest)
+
+		// 保存更新后的领域状态
 		await this.repository.save(aggregate.toJSON())
+
 		return {
+			// 将目标页面加入重新生成队列
+			// 后续流程会按照普通页面生成流程重新处理
 			queue: [state.targetPageId],
+
+			// 重置当前页面，等待 selectPage 节点重新选择
 			currentPageId: null,
+
+			// 记录本次页面修改流程的执行轨迹
 			executionPath: [...state.executionPath, 'prepare_page_revision']
 		}
 	}
@@ -602,25 +667,73 @@ export class PresentationGraphService implements OnModuleInit, OnModuleDestroy {
 	private readonly routeAfterQueuePrepared = (state: WorkflowValue) =>
 		state.queue.length > 0 ? 'select_page' : 'summarize_pages'
 
+	/**
+	 * 从页面执行队列中选择当前需要处理的页面。
+	 *
+	 * 主要负责：
+	 * 1. 从队列头部取出下一个待制作页面。
+	 * 2. 更新当前页面 ID。
+	 * 3. 移除已经被选中的页面，保留剩余队列。
+	 * 4. 记录当前节点执行轨迹。
+	 */
 	private readonly selectPage = (state: WorkflowValue) => {
+		// 从队列中取出第一个页面作为当前处理目标
 		const [currentPageId, ...queue] = state.queue
-		if (!currentPageId) throw new Error('页面执行队列为空。')
+
+		// 如果队列为空，说明没有可执行的页面任务
+		if (!currentPageId) {
+			throw new Error('页面执行队列为空。')
+		}
+
 		return {
+			// 当前正在制作的页面 ID
 			currentPageId,
+
+			// 剩余未处理页面，等待下一轮循环执行
 			queue,
+
+			// 记录页面选择过程，方便调试和流程追踪
 			executionPath: [...state.executionPath, `select:${currentPageId}`]
 		}
 	}
 
+	/**
+	 * 执行单个页面的生成任务。
+	 *
+	 * 主要负责：
+	 * 1. 校验当前是否存在需要生成的页面。
+	 * 2. 标记页面开始执行，并保存状态。
+	 * 3. 调用模型生成页面内容。
+	 * 4. 根据生成结果更新页面状态。
+	 * 5. 捕获生成失败，记录错误并支持后续重试。
+	 */
 	private readonly generatePage = async (state: WorkflowValue) => {
-		if (!state.currentPageId) throw new Error('没有指定当前页面。')
+		// 当前节点必须指定正在处理的页面
+		if (!state.currentPageId) {
+			throw new Error('没有指定当前页面。')
+		}
+
+		// 加载演示文稿聚合对象
 		const aggregate = await this.load(state.presentationId)
+
+		// 根据当前模型模式获取对应模型服务
 		const provider = this.models.getProvider(aggregate.toJSON().modelMode)
+
+		// 将页面状态更新为执行中，并记录一次尝试
 		const page = aggregate.startPage(state.currentPageId)
+
+		// 保存页面开始生成后的状态
 		await this.repository.save(aggregate.toJSON())
 
 		try {
-			// Replay 中稳定注入一次失败，用来验证部分成功和断点续做。
+			/**
+			 * Replay 模式下人为注入一次失败。
+			 *
+			 * 用于测试：
+			 * 1. 部分页面成功生成。
+			 * 2. 工作流中断后的恢复。
+			 * 3. 失败页面重新执行。
+			 */
 			if (
 				provider.mode === 'replay' &&
 				page.order === 3 &&
@@ -630,27 +743,47 @@ export class PresentationGraphService implements OnModuleInit, OnModuleDestroy {
 				throw new Error('页面生成服务暂时不可用')
 			}
 
+			// 重新加载最新聚合状态，避免长流程执行过程中使用旧数据
 			const latest = await this.load(state.presentationId)
+
+			// 获取当前有效大纲
 			const outline = latest.currentOutline
-			if (!outline) throw new Error('没有找到当前大纲。')
+			if (!outline) {
+				throw new Error('没有找到当前大纲。')
+			}
+
+			// 获取当前需要生成的页面任务
 			const currentPage = latest.getPage(state.currentPageId)
+
+			// 调用模型生成页面内容
 			const content = await provider.generatePage({
 				requirements: latest.toJSON().requirements,
 				outline,
 				page: currentPage
 			})
+
+			// 页面生成成功，更新页面产物和状态
 			latest.completePage(state.currentPageId, content)
+
+			// 保存生成完成后的最新状态
 			await this.repository.save(latest.toJSON())
 		} catch (error) {
+			// 生成失败时重新加载最新状态
 			const failed = await this.load(state.presentationId)
+
+			// 标记页面失败，并记录失败原因
+			// 后续工作流可以根据 failed 状态进行重试或恢复
 			failed.failPage(
 				state.currentPageId,
 				error instanceof Error ? error.message : '页面生成失败'
 			)
+
+			// 保存失败状态
 			await this.repository.save(failed.toJSON())
 		}
 
 		return {
+			// 记录当前页面生成节点执行完成
 			executionPath: [...state.executionPath, `generate:${state.currentPageId}`]
 		}
 	}
@@ -663,19 +796,47 @@ export class PresentationGraphService implements OnModuleInit, OnModuleDestroy {
 		executionPath: [...state.executionPath, 'summarize_pages']
 	})
 
+	/**
+	 * 导出演示文稿文件。
+	 *
+	 * 主要负责：
+	 * 1. 加载当前演示文稿聚合状态。
+	 * 2. 校验当前页面是否满足导出条件。
+	 * 3. 调用导出服务生成最终文件。
+	 * 4. 记录导出结果并持久化状态。
+	 */
 	private readonly exportPresentation = async (state: WorkflowValue) => {
+		// 加载当前演示文稿聚合对象
 		const aggregate = await this.load(state.presentationId)
+
+		// 校验当前演示文稿是否满足导出条件
+		// 例如：所有页面是否已经生成完成
 		const pages = aggregate.assertExportable()
+
+		// 获取当前审核通过的大纲
 		const outline = aggregate.currentOutline
-		if (!outline) throw new Error('没有找到当前大纲。')
+
+		// 导出前必须存在有效大纲
+		if (!outline) {
+			throw new Error('没有找到当前大纲。')
+		}
+
+		// 调用导出服务，根据演示文稿数据生成最终文件
 		const record = await this.exporter.export(
 			aggregate.toJSON(),
 			outline,
 			pages
 		)
+
+		// 将本次导出记录写入领域状态
+		// 包括导出文件信息、版本等数据
 		aggregate.recordExport(record)
+
+		// 保存导出完成后的最新状态
 		await this.repository.save(aggregate.toJSON())
+
 		return {
+			// 记录当前节点执行轨迹，方便工作流调试和恢复
 			executionPath: [...state.executionPath, 'export_presentation']
 		}
 	}
@@ -684,27 +845,61 @@ export class PresentationGraphService implements OnModuleInit, OnModuleDestroy {
 		executionPath: [...state.executionPath, 'finish_rejected']
 	})
 
+	/**
+	 * 执行一次工作流操作。
+	 *
+	 * 主要负责：
+	 * 1. 根据 presentationId 获取当前工作流状态。
+	 * 2. 校验任务是否存在。
+	 * 3. 合并新的操作指令和额外参数。
+	 * 4. 恢复工作流继续执行。
+	 *
+	 * 常用于：
+	 * - 用户审核大纲后恢复执行。
+	 * - 用户修改页面后触发重新生成。
+	 * - 外部请求驱动 Agent 继续执行。
+	 */
 	private async invokeOperation(
 		presentationId: string,
 		operation: z.infer<typeof OperationSchema>,
 		extra: Partial<WorkflowValue> = {}
 	): Promise<void> {
+		// 根据演示文稿 ID 创建 LangGraph 配置
 		const config = this.config(presentationId)
+
+		// 获取当前工作流保存的状态
+		// 这里不会重新执行节点，只读取 Checkpointer 中的快照
 		const snapshot = await this.graph.getState(config)
+
+		// 如果不存在 presentationId，说明该任务没有对应的工作流状态
 		if (!snapshot.values.presentationId) {
 			throw new Error('没有找到该任务的工作流状态。')
 		}
+
+		// 使用当前状态恢复工作流执行
 		await this.graph.invoke(
 			{
+				// 保留之前的工作流状态
 				...snapshot.values,
+
+				// 注入本次需要执行的操作
 				operation,
+
+				// 重置一次性执行字段，避免沿用上一次状态
 				queue: [],
 				currentPageId: null,
 				targetPageId: null,
+
+				// 清理用户修改相关信息
 				changeRequest: null,
 				nextRequirements: null,
+
+				// 清理审核相关信息
 				reviewDecision: null,
 				reviewFeedback: null,
+
+				// 合并额外传入的数据
+				// 例如页面重做目标、用户修改要求等
 				...extra
 			},
 			config

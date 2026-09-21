@@ -277,11 +277,29 @@ async function applyNaturalLanguageChange() {
 	})
 }
 
+/**
+ * 导出演示文稿文件。
+ *
+ * 主要负责：
+ * 1. 调用后端接口生成 PPTX 文件。
+ * 2. 更新当前任务状态。
+ * 3. 刷新任务列表，获取最新导出状态。
+ * 4. 打开文件下载地址。
+ */
 async function exportPptx() {
+	// 没有选中的演示文稿时，不执行导出操作
 	if (!selected.value) return
+
+	// 使用统一请求包装函数处理加载状态和异常
 	await run(async () => {
+		// 调用接口触发 PPTX 导出流程
+		// 返回最新的演示文稿状态
 		selected.value = await api.export(selected.value!.id)
+
+		// 重新加载任务列表，更新页面中的状态展示
 		await loadTasks(selected.value.id)
+
+		// 打开生成后的 PPTX 下载地址
 		window.open(api.downloadUrl(selected.value.id), '_blank')
 	})
 }

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DeckFlow · AI 演示文稿工作流</title>
+    <style>
+      :root { color: #182422; background: #f3f1ea; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+      * { box-sizing: border-box; } body { margin: 0; } button, input, textarea, select { font: inherit; }
+      header { display:flex; align-items:center; justify-content:space-between; height:62px; padding:0 24px; background:#182422; color:#fff; }
+      header small { color:#b9ccc5; } main { display:grid; grid-template-columns:260px minmax(0, 1fr) 330px; min-height:calc(100vh - 62px); }
+      aside, section { padding:22px; border-right:1px solid #d8d4ca; } aside { background:#ebe9e2; } .panel { background:#fffdf8; }
+      h1 { margin:0 0 8px; font-size:26px; } h2 { font-size:18px; } h3 { font-size:14px; } p, small { color:#66706a; }
+      .task { width:100%; padding:10px; margin:6px 0; border:1px solid transparent; background:transparent; text-align:left; border-radius:6px; cursor:pointer; }
+      .task.active, .task:hover { border-color:#c8c4ba; background:#fffdf8; } .task strong, .task small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .form { display:grid; grid-template-columns:1fr 130px; gap:12px; } label { display:grid; gap:5px; font-size:12px; font-weight:700; } .wide { grid-column:1/-1; }
+      input, textarea, select { width:100%; border:1px solid #cfcac0; border-radius:5px; padding:9px; background:#fffefa; color:#182422; } textarea { resize:vertical; min-height:80px; }
+      button { border:1px solid #c5c1b8; padding:8px 11px; border-radius:5px; background:#fffefa; color:#182422; cursor:pointer; font-weight:700; font-size:12px; }
+      button.primary { border-color:#183a34; background:#183a34; color:#fff; } button.danger { border-color:#d9aaa0; color:#a33c2d; background:#fff4f0; }
+      button:disabled { opacity:.5; cursor:not-allowed; } .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+      .hidden { display:none; } .status { display:inline-block; padding:4px 7px; border-radius:4px; background:#e3efe9; color:#285f4f; font-size:11px; font-weight:700; }
+      .outline { margin:16px 0; padding:0; list-style:none; } .outline li { border-top:1px solid #ddd9d0; padding:13px 0; } .outline b { color:#e8573f; margin-right:9px; }
+      .page-list { display:flex; flex-wrap:wrap; gap:7px; margin:14px 0; } .page-list button.active { background:#e8f0ec; border-color:#6a9183; }
+      .slide { min-height:330px; padding:38px 48px; color:var(--text); background:var(--background); border-left:9px solid var(--accent); box-shadow:0 12px 30px rgba(24,36,34,.13); }
+      .slide h2 { font-size:29px; margin:0 0 12px; } .slide ul { line-height:1.9; font-size:17px; } .slide small { color:var(--muted); }
+      .inspector { background:#ebe9e2; } .section { padding:0 0 17px; margin-bottom:17px; border-bottom:1px solid #d2cec4; }
+      .timeline { padding:0; list-style:none; } .timeline li { padding:7px 0; font-size:12px; border-bottom:1px solid #ddd9d0; } .error { position:fixed; right:18px; bottom:18px; max-width:520px; padding:12px; background:#fff1ed; border:1px solid #e2aaa0; color:#a33c2d; }
+      @media (max-width: 980px) { main { grid-template-columns:220px 1fr; } .inspector { grid-column:1/-1; border-top:1px solid #d8d4ca; } }
+      @media (max-width: 680px) { main { display:block; } aside { max-height:220px; overflow:auto; } .form { grid-template-columns:1fr; } .wide { grid-column:auto; } }
+    </style>
+  </head>
+  <body>
+    <header><div><strong>DeckFlow</strong><br /><small>AI 演示文稿工作流 · Python</small></div><span id="mode">Replay 教学模式</span></header>
+    <main>
+      <aside><div style="display:flex;justify-content:space-between;align-items:center"><h2>制作任务</h2><button id="new-task">新建</button></div><div id="tasks">载入中…</div></aside>
+      <section class="panel" id="studio"></section>
+      <aside class="inspector" id="inspector"><p>选择或新建一个任务后，这里会显示审核、续做、修改和导出操作。</p></aside>
+    </main>
+    <div id="error" class="error hidden"></div>
+    <script>
+      const state = { tasks: [], selected: null, selectedPageId: null, meta: null };
+      const studio = document.querySelector('#studio'), inspector = document.querySelector('#inspector'), tasks = document.querySelector('#tasks');
+      const errorBox = document.querySelector('#error');
+      const example = {
+        modelMode: 'replay', topic: 'Agent 大模型课程企业发布方案', audience: '企业技术负责人和研发管理者', pageCount: 5,
+        additionalRequirements: '内容强调可落地性、风险控制和持久化执行。', sourceName: 'Agent 课程发布资料.md',
+        sourceText: 'Agent 大模型 0～1 系统课覆盖模型调用、RAG、MCP、Agent Runtime、LangChain、LangGraph、Memory 与企业工作流。企业落地时需要重点关注权限隔离、执行预算、证据校验、版本管理、人工确认和可观察性。'
+      };
+      const escape = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+      function showError(message) { errorBox.textContent = message; errorBox.classList.remove('hidden'); setTimeout(() => errorBox.classList.add('hidden'), 5000); }
+      async function api(path, options = {}) {
+        const response = await fetch('/api' + path, { headers: { 'Content-Type':'application/json', ...(options.headers || {}) }, ...options });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(Array.isArray(payload?.message) ? payload.message.join('；') : payload?.message || '请求处理失败');
+        return payload;
+      }
+      async function refresh(preferredId = state.selected?.id) {
+        state.tasks = await api('/presentations');
+        tasks.innerHTML = state.tasks.length ? state.tasks.map(item => `<button class="task ${item.id === preferredId ? 'active':''}" data-id="${item.id}"><strong>${escape(item.requirements.topic)}</strong><small>${item.modelMode === 'ai' ? 'AI' : 'Replay'} · ${escape(item.status)}</small></button>`).join('') : '<p>还没有制作任务</p>';
+        tasks.querySelectorAll('[data-id]').forEach(button => button.onclick = () => selectTask(button.dataset.id));
+        if (preferredId) state.selected = state.tasks.find(item => item.id === preferredId) || null;
+      }
+      async function selectTask(id) { state.selected = await api('/presentations/' + id); state.selectedPageId = null; await refresh(id); render(); }
+      function currentOutline() { return state.selected?.outlines.find(item => item.version === state.selected.currentOutlineVersion); }
+      function currentPages() { return (state.selected?.pages || []).filter(item => item.outlineVersion === state.selected.currentOutlineVersion).sort((a,b) => a.order-b.order); }
+      function selectedPage() { return currentPages().find(item => item.pageId === state.selectedPageId) || currentPages()[0]; }
+      function createView() {
+        studio.innerHTML = `<div><h1>把一份资料，交给可恢复的 Agent 工作流</h1><p>先生成大纲，人工确认方向，再逐页制作并导出可编辑 PPTX。</p>
+          <form id="create-form" class="form"><label class="wide">内容生成模式<select name="modelMode"><option value="replay">Replay（无需密钥）</option><option value="ai" ${state.meta?.aiAvailable ? '' : 'disabled'}>AI（${state.meta?.model || 'DeepSeek'}）</option></select></label>
+          <label class="wide">演示主题<input name="topic" required value="${escape(example.topic)}" /></label><label>目标观众<input name="audience" required value="${escape(example.audience)}" /></label><label>页数<input name="pageCount" type="number" min="3" max="12" value="${example.pageCount}" /></label>
+          <label class="wide">其他制作要求<input name="additionalRequirements" value="${escape(example.additionalRequirements)}" /></label><label class="wide">参考资料<textarea name="sourceText" required>${escape(example.sourceText)}</textarea></label><label class="wide">上传 .md 或 .txt 资料<input id="source-file" type="file" accept=".md,.txt,text/plain,text/markdown" /></label><label class="wide">资料名称<input name="sourceName" value="${escape(example.sourceName)}" /></label></form>
+          <div class="actions"><button class="primary" id="create">开始制作</button></div></div>`;
+        inspector.innerHTML = '<p>Replay 模式会在第三页首次生成时注入一次失败，以便演示部分成功与续做。</p>';
+        document.querySelector('#source-file').onchange = async event => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          document.querySelector('[name="sourceText"]').value = await file.text();
+          document.querySelector('[name="sourceName"]').value = file.name;
+        };
+        document.querySelector('#create').onclick = async () => {
+          try { const form = new FormData(document.querySelector('#create-form')); const input = Object.fromEntries(form); input.pageCount = Number(input.pageCount); state.selected = await api('/presentations', { method:'POST', body:JSON.stringify(input) }); await refresh(state.selected.id); render(); } catch (error) { showError(error.message); }
+        };
+      }
+      function renderTask() {
+        const task = state.selected, outline = currentOutline(), pages = currentPages(), page = selectedPage();
+        const artifact = page?.artifacts.find(item => item.artifactId === page.currentArtifactId);
+        studio.innerHTML = `<div><span class="status">${escape(task.status)}</span><h1>${escape(task.requirements.topic)}</h1><p>${task.modelMode === 'ai' ? 'AI 模式' : 'Replay 教学模式'} · 当前大纲 Outline v${task.currentOutlineVersion || '-'}</p>
+          <h2>${outline ? escape(outline.title) : '等待大纲生成'}</h2><ol class="outline">${(outline?.slides || []).map(slide => `<li><b>${String(slide.order).padStart(2,'0')}</b><strong>${escape(slide.title)}</strong><br /><small>${escape(slide.purpose)} · ${slide.keyPoints.map(escape).join(' / ')}</small></li>`).join('')}</ol>
+          ${pages.length ? `<h2>页面预览</h2><div class="page-list">${pages.map(item => `<button class="${item.pageId === page?.pageId ? 'active':''}" data-page="${item.pageId}">第 ${item.order} 页 · ${escape(item.status)}</button>`).join('')}</div>
+          <div class="slide" style="--background:#${page?.styleOverride?.backgroundColor || (page?.order === 1 ? task.theme.coverBackgroundColor : task.theme.backgroundColor)};--text:#${page?.styleOverride?.textColor || (page?.order === 1 ? task.theme.coverTextColor : task.theme.textColor)};--accent:#${page?.styleOverride?.accentColor || task.theme.accentColor};--muted:#${page?.styleOverride?.mutedColor || task.theme.mutedColor}">
+          ${artifact ? `<h2>${escape(artifact.title)}</h2><small>${escape(artifact.subtitle)}</small><ul>${artifact.bullets.map(item => `<li>${escape(item)}</li>`).join('')}</ul>` : `<h2>${page?.status === 'failed' ? '本页制作失败' : '本页尚未生成'}</h2><p>${escape(page?.lastError || '等待 Agent 执行页面任务')}</p>`}<small>Outline v${page?.outlineVersion} · Revision ${page?.pageRevision}</small></div>` : ''}
+          <h2>原始资料</h2><pre style="white-space:pre-wrap;font:12px/1.7 monospace">${escape(task.requirements.sourceText)}</pre></div>`;
+        studio.querySelectorAll('[data-page]').forEach(button => button.onclick = () => { state.selectedPageId = button.dataset.page; renderTask(); });
+        renderInspector(task, outline, page, pages);
+      }
+      function renderInspector(task, outline, page, pages) {
+        const canReview = task.status === 'waiting_review' && outline?.status === 'pending_review';
+        inspector.innerHTML = `<div class="section"><h3>进度</h3><p>${pages.filter(item => item.status === 'completed').length} / ${pages.length || (outline?.slides.length || 0)} 页完成</p><p>主题：${escape(task.theme.name)} · v${task.theme.revision}</p></div>
+          ${canReview ? `<div class="section"><h3>审核 Outline v${outline.version}</h3><textarea id="review-feedback" placeholder="要求修改或拒绝时填写原因"></textarea><div class="actions"><button data-review="approve" class="primary">批准</button><button data-review="revise">要求修改</button><button data-review="reject" class="danger">拒绝</button></div></div>` : ''}
+          <div class="section"><h3>自然语言修改</h3><textarea id="change" placeholder="例如：整体改成深色科技风；第二页使用绿色背景；增加一页实施成本"></textarea><button id="apply-change">应用修改</button></div>
+          ${page?.status === 'completed' ? `<div class="section"><h3>重做第 ${page.order} 页</h3><textarea id="page-feedback" placeholder="例如：减少技术术语，突出业务收益"></textarea><button id="revise-page">生成新 Revision</button></div>` : ''}
+          <div class="section"><div class="actions"><button id="continue">继续未完成页面</button><button id="export" class="primary" ${task.status === 'completed' || task.status === 'exported' ? '' : 'disabled'}>导出 PPTX</button></div></div>
+          <div class="section"><h3>时间线</h3><ul class="timeline">${task.timeline.slice().reverse().slice(0,10).map(event => `<li><strong>${escape(event.message)}</strong><br /><small>${escape(event.createdAt)}</small></li>`).join('')}</ul></div>`;
+        inspector.querySelectorAll('[data-review]').forEach(button => button.onclick = () => action(async () => { state.selected = await api(`/presentations/${task.id}/review`, {method:'POST',body:JSON.stringify({decision:button.dataset.review,outlineVersion:outline.version,feedback:document.querySelector('#review-feedback').value})}); }));
+        inspector.querySelector('#continue').onclick = () => action(async () => { state.selected = await api(`/presentations/${task.id}/continue`, {method:'POST'}); });
+        inspector.querySelector('#apply-change').onclick = () => action(async () => { const instruction = document.querySelector('#change').value.trim(); if (!instruction) throw new Error('请先填写修改要求。'); const result = await api(`/presentations/${task.id}/changes`, {method:'POST',body:JSON.stringify({instruction})}); state.selected = result.presentation; alert(`修改范围：${result.plan.scope}\n${result.plan.reason}`); });
+        const revise = inspector.querySelector('#revise-page'); if (revise) revise.onclick = () => action(async () => { const changeRequest = document.querySelector('#page-feedback').value.trim(); if (!changeRequest) throw new Error('请先填写页面修改要求。'); state.selected = await api(`/presentations/${task.id}/pages/${page.pageId}/revise`, {method:'POST',body:JSON.stringify({changeRequest})}); });
+        inspector.querySelector('#export').onclick = () => action(async () => { state.selected = await api(`/presentations/${task.id}/export`, {method:'POST'}); window.open(`/api/presentations/${task.id}/download`, '_blank'); });
+      }
+      async function action(operation) { try { await operation(); await refresh(state.selected.id); renderTask(); } catch (error) { showError(error.message); } }
+      function render() { if (state.selected) renderTask(); else createView(); }
+      document.querySelector('#new-task').onclick = () => { state.selected = null; state.selectedPageId = null; render(); };
+      (async () => { try { state.meta = await api('/presentations/meta'); document.querySelector('#mode').textContent = state.meta.defaultMode === 'ai' && state.meta.aiAvailable ? `${state.meta.model} AI 模式` : 'Replay 教学模式'; await refresh(); render(); } catch (error) { showError(error.message); } })();
+    </script>
+  </body>
+</html>

@@ -17,6 +17,13 @@ export class PresentationExportService {
 		process.env.EXPORT_DIR ?? 'data/exports'
 	)
 
+	/**
+	 * 导出演示文稿文件。
+	 * @param presentation
+	 * @param outline
+	 * @param pages
+	 * @returns
+	 */
 	async export(
 		presentation: Presentation,
 		outline: OutlineVersion,
@@ -42,19 +49,24 @@ export class PresentationExportService {
 			const pageStyle = page.styleOverride
 			const layoutStyle =
 				pageStyle?.layoutStyle ?? presentation.theme.layoutStyle
-			const titleAlign =
-				pageStyle?.titleAlign ?? presentation.theme.titleAlign
+			const titleAlign = pageStyle?.titleAlign ?? presentation.theme.titleAlign
 			const isCompact =
 				(pageStyle?.density ?? presentation.theme.density) === 'compact'
-			const backgroundColor = pageStyle?.backgroundColor ?? (isCover
-				? presentation.theme.coverBackgroundColor
-				: presentation.theme.backgroundColor)
-			const textColor = pageStyle?.textColor ?? (isCover
-				? presentation.theme.coverTextColor
-				: presentation.theme.textColor)
-			const mutedColor = pageStyle?.mutedColor ?? (isCover
-				? presentation.theme.coverMutedColor
-				: presentation.theme.mutedColor)
+			const backgroundColor =
+				pageStyle?.backgroundColor ??
+				(isCover
+					? presentation.theme.coverBackgroundColor
+					: presentation.theme.backgroundColor)
+			const textColor =
+				pageStyle?.textColor ??
+				(isCover
+					? presentation.theme.coverTextColor
+					: presentation.theme.textColor)
+			const mutedColor =
+				pageStyle?.mutedColor ??
+				(isCover
+					? presentation.theme.coverMutedColor
+					: presentation.theme.mutedColor)
 			const accentColor =
 				pageStyle?.accentColor ?? presentation.theme.accentColor
 			const artifact = page.artifacts.find(
@@ -92,8 +104,7 @@ export class PresentationExportService {
 				w: 10.6,
 				h: 1.2,
 				fontSize: isCover ? 31 : 26,
-				fontFace:
-					pageStyle?.headFontFace ?? presentation.theme.headFontFace,
+				fontFace: pageStyle?.headFontFace ?? presentation.theme.headFontFace,
 				bold: true,
 				color: textColor,
 				align: titleAlign,
@@ -106,8 +117,7 @@ export class PresentationExportService {
 				w: 10.2,
 				h: 0.45,
 				fontSize: 12,
-				fontFace:
-					pageStyle?.bodyFontFace ?? presentation.theme.bodyFontFace,
+				fontFace: pageStyle?.bodyFontFace ?? presentation.theme.bodyFontFace,
 				color: mutedColor,
 				align: titleAlign,
 				margin: 0
@@ -123,8 +133,7 @@ export class PresentationExportService {
 					w: 10.6,
 					h: isCompact ? 3.4 : 3.2,
 					fontSize: isCompact ? 16 : 18,
-					fontFace:
-						pageStyle?.bodyFontFace ?? presentation.theme.bodyFontFace,
+					fontFace: pageStyle?.bodyFontFace ?? presentation.theme.bodyFontFace,
 					color: textColor,
 					breakLine: false,
 					margin: 0.04,
@@ -132,15 +141,18 @@ export class PresentationExportService {
 					valign: 'mid'
 				}
 			)
-			slide.addText(`Outline v${outline.version} · Revision ${page.pageRevision}`, {
-				x: 0.88,
-				y: 6.85,
-				w: 5.5,
-				h: 0.3,
-				fontSize: 9,
-				color: mutedColor,
-				margin: 0
-			})
+			slide.addText(
+				`Outline v${outline.version} · Revision ${page.pageRevision}`,
+				{
+					x: 0.88,
+					y: 6.85,
+					w: 5.5,
+					h: 0.3,
+					fontSize: 9,
+					color: mutedColor,
+					margin: 0
+				}
+			)
 			slide.addNotes(artifact.speakerNote)
 		}
 
