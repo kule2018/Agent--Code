@@ -1,0 +1,19 @@
+{
+  "name": "06-multi-agent-review",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "demo": "node --env-file=.env review-workflow.js",
+    "validate": "node review-workflow.js validate",
+    "check": "node --check review-workflow.js && node --check workflow.js && node --check agents.js && node --check contracts.js",
+    "test": "node --test review.test.js"
+  },
+  "dependencies": {
+    "@langchain/deepseek": "1.1.13",
+    "deepagents": "1.14.0",
+    "langchain": "1.5.12",
+    "zod": "4.6.5"
+  }
+}

@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: story-game-agent-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: story_course
+      POSTGRES_PASSWORD: story_course
+      POSTGRES_DB: story_agent
+    ports:
+      - "5437:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U story_course -d story_agent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - story_agent_data:/var/lib/postgresql/data
+volumes:
+  story_agent_data:
