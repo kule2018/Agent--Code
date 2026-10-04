@@ -1,0 +1,27 @@
+{
+  "name": "07-ai-story-game-agent-python-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "uv run python scripts/dev.py",
+    "dev:web": "vite --config web/vite.config.ts",
+    "check": "vue-tsc -p web/tsconfig.json --noEmit",
+    "build": "npm run check && vite build --config web/vite.config.ts",
+    "test": "uv run python -m unittest discover -s tests -v",
+    "smoke": "uv run python -m server.src.smoke",
+    "start": "uv run python -m server.src.main"
+  },
+  "dependencies": {
+    "@lucide/vue": "^1.27.0",
+    "@vue-flow/core": "^1.48.2",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5",
+    "vue-tsc": "^3.0.0"
+  }
+}

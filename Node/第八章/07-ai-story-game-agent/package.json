@@ -7,10 +7,11 @@
   "scripts": {
     "dev": "concurrently -k -n server,web -c blue,green \"npm:dev:server\" \"npm:dev:web\"",
     "dev:server": "tsx watch --tsconfig server/tsconfig.json server/src/main.ts",
+    "predev:web": "node scripts/wait-for-api.mjs",
     "dev:web": "vite --config web/vite.config.ts",
     "build": "npm run check && tsc -p server/tsconfig.json && vite build --config web/vite.config.ts",
     "check": "tsc -p server/tsconfig.json --noEmit && vue-tsc -p web/tsconfig.json --noEmit",
-    "test": "node --import tsx --test server/src/*.test.ts",
+    "test": "tsx --tsconfig server/tsconfig.json --test server/src/*.test.ts",
     "smoke": "tsx server/src/smoke.ts",
     "start": "node dist/server/src/main.js"
   },

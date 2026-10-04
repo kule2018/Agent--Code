@@ -16,6 +16,8 @@ npm run dev
 
 打开 [http://localhost:5183](http://localhost:5183)。NestJS API 使用 `127.0.0.1:4311`，Vite 已代理 `/api`。第一次启动会自动创建项目表和 LangGraph Checkpoint 表，不需要额外的 setup 命令。
 
+`npm run dev` 会等待后端 API 就绪后再启动前端，避免初始化期间出现 `ECONNREFUSED 127.0.0.1:4311`。如果等待 30 秒仍未就绪，先查看终端的 `[server]` 日志，并运行 `docker compose ps`，确认 PostgreSQL 为 `healthy`。后端就绪时会打印 `Story API: http://127.0.0.1:4311`。
+
 Replay 演示无需模型 Key。选择“正常完成”或“故障演示：冲突与局部返工”，两者都先暂停等待人工批准大纲。
 
 AI 模式需要在本机配置环境变量，例如在本项目自己的 `.env` 中配置：
