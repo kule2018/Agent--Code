@@ -1,0 +1,12 @@
+[project]
+name = "agent-course-table-import-python"
+version = "0.1.0"
+description = "Import sales Excel and CSV with data quality checks and versioned DuckDB storage"
+requires-python = ">=3.11"
+dependencies = [
+    "duckdb==1.5.6",
+    "openpyxl==3.1.5",
+]
+
+[tool.uv]
+package = false

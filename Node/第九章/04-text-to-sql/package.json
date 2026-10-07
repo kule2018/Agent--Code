@@ -1,0 +1,19 @@
+{
+  "name": "04-text-to-sql",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.0.0" },
+  "scripts": {
+    "prepare-data": "node text-to-sql.js prepare",
+    "demo": "node text-to-sql.js demo",
+    "ask": "node --env-file=.env text-to-sql.js ask",
+    "test": "node --test text-to-sql.test.js"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "1.5.6-r.1",
+    "openai": "7.30.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "zod": "4.6.5"
+  }
+}
