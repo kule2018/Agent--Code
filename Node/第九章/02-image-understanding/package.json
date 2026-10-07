@@ -1,0 +1,18 @@
+{
+  "name": "02-image-understanding",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "clear": "node --env-file=.env image-understanding.js clear",
+    "incomplete": "node --env-file=.env image-understanding.js incomplete",
+    "request": "node image-understanding.js request",
+    "test": "node --test",
+    "check": "node --check image-understanding.js"
+  },
+  "dependencies": {
+    "openai": "7.27.0",
+    "zod": "4.6.5"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "03-table-import",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "inspect": "node import-data.js inspect samples/sales-clean.xlsx",
+    "xlsx": "node import-data.js import samples/sales-clean.xlsx --sheet 销售明细 --header-row 3",
+    "csv": "node import-data.js import samples/sales-clean.csv",
+    "issues": "node import-data.js import samples/sales-issues.xlsx --sheet 销售明细 --header-row 3",
+    "test": "node --test",
+    "check": "node --check import-data.js && node --check table-parser.js"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "1.5.6-r.1",
+    "csv-parse": "7.0.3",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  }
+}

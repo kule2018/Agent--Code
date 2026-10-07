@@ -1,0 +1,8 @@
+version = 1
+revision = 3
+requires-python = ">=3.11"
+
+[[package]]
+name = "agent-course-image-understanding-python"
+version = "0.1.0"
+source = { virtual = "." }

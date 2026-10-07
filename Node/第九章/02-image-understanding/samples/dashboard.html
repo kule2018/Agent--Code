@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>销售经营看板 · 教学样本</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #242b35; background: #f3f5f7; font: 16px "PingFang SC", "Microsoft YaHei", sans-serif; letter-spacing: 0; }
+    header { height: 64px; padding: 0 36px; background: #fff; border-bottom: 1px solid #dfe4e9; display: flex; align-items: center; justify-content: space-between; }
+    header strong { font-size: 21px; }
+    .badge { font-size: 13px; color: #576270; padding: 6px 10px; background: #edf0f4; border-radius: 4px; }
+    main { max-width: 1160px; margin: 30px auto; }
+    .heading { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
+    h1 { margin: 0 0 10px; font-size: 30px; }
+    .subtitle { color: #606c7b; }
+    .filters { display: flex; gap: 18px; align-items: center; font-size: 14px; margin-top: 9px; }
+    .period { margin: 0 0 22px; padding: 14px 18px; border-left: 4px solid #2079d8; background: #e8f2fd; }
+    .metrics { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 20px; }
+    .metric { background: #fff; border: 1px solid #dce2e9; border-radius: 6px; padding: 20px 22px; }
+    .label { color: #536071; }
+    .value { margin: 12px 0; font-size: 42px; font-weight: 650; }
+    .unit { font-size: 18px; font-weight: 400; margin-left: 10px; }
+    .note { font-size: 14px; color: #687687; }
+    .green { color: #17825b; }
+    .details { display: grid; grid-template-columns: 1.35fr 1fr; gap: 32px; margin-top: 30px; background: #fff; padding: 24px; border-top: 1px solid #dce2e9; }
+    h2 { margin: 0 0 20px; font-size: 19px; }
+    .bar-row { display: grid; grid-template-columns: 45px 1fr 80px; gap: 12px; align-items: center; margin-bottom: 20px; font-size: 15px; }
+    .track { height: 16px; background: #eef2f6; }
+    .bar { height: 100%; background: #287fd0; }
+    .bar.teal { background: #259783; }
+    .bar.orange { background: #dc9644; }
+    .bar.grey { background: #8294aa; }
+    .right { padding-left: 25px; border-left: 1px solid #e1e6ec; }
+    .definition { line-height: 1.9; margin: 0; }
+    footer { margin-top: 22px; color: #7a8591; font-size: 13px; }
+    .masked { color: transparent !important; background: #cbd2da; border-radius: 3px; user-select: none; }
+  </style>
+</head>
+<body>
+  <header><strong>星河零售 · 经营分析</strong><span class="badge">课程模拟数据</span></header>
+  <main>
+    <div class="heading">
+      <div><h1>销售经营看板</h1><div class="subtitle">销售概览 / 区域经营</div></div>
+      <div class="filters"><span>区域：全部区域</span><span>订单：已支付订单</span></div>
+    </div>
+    <div class="period">统计周期：<span data-hide>2026-09-01 至 2026-09-30</span></div>
+    <div class="metrics">
+      <section class="metric"><div class="label">销售额</div><div class="value"><span data-hide>128.60</span><span class="unit" data-hide>万元</span></div><div class="note">当期已支付订单实付金额</div></section>
+      <section class="metric"><div class="label">支付订单数</div><div class="value">3,216<span class="unit">笔</span></div><div class="note">仅统计支付成功的订单</div></section>
+      <section class="metric"><div class="label">支付成功率</div><div class="value green">96.8<span class="unit">%</span></div><div class="note">支付成功订单 / 发起支付订单</div></section>
+    </div>
+    <div class="details">
+      <section>
+        <h2>各区域销售额占比</h2>
+        <div class="bar-row"><span>华东</span><div class="track"><div class="bar" style="width:82%"></div></div><span>41.0%</span></div>
+        <div class="bar-row"><span>华南</span><div class="track"><div class="bar teal" style="width:57%"></div></div><span>28.5%</span></div>
+        <div class="bar-row"><span>华北</span><div class="track"><div class="bar orange" style="width:37%"></div></div><span>18.5%</span></div>
+        <div class="bar-row"><span>其他</span><div class="track"><div class="bar grey" style="width:24%"></div></div><span>12.0%</span></div>
+      </section>
+      <section class="right">
+        <h2>指标说明</h2>
+        <p class="definition">销售额 = 当期已支付订单实付金额。<br><strong>未扣除退款。</strong><br>全部区域汇总；不含未支付及取消订单。</p>
+        <p class="note">区域占比采用相同统计口径。</p>
+      </section>
+    </div>
+    <footer>示例看板仅用于课程练习，数据为人工构造，不对应真实经营情况。</footer>
+  </main>
+  <script>
+    // 第二份样本在渲染前移除部分原文，保证模型只能依据可见内容判断。
+    if (new URLSearchParams(location.search).get('mode') === 'incomplete') {
+      document.querySelectorAll('[data-hide]').forEach((element) => {
+        element.style.display = 'inline-block'
+        element.style.width = `${element.getBoundingClientRect().width}px`
+        element.classList.add('masked')
+        element.textContent = '\u00a0'
+      })
+    }
+  </script>
+</body>
+</html>
