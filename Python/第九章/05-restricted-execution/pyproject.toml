@@ -1,0 +1,9 @@
+[project]
+name = "restricted-execution-course"
+version = "1.0.0"
+description = "在受限临时 Docker 容器中执行 SQL 与 Python 分析代码"
+requires-python = ">=3.11"
+dependencies = ["duckdb==1.5.6", "openpyxl==3.1.5"]
+
+[tool.uv]
+package = false

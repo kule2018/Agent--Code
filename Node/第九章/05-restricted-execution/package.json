@@ -1,0 +1,12 @@
+{
+  "name": "05-restricted-execution",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build:sandbox": "node build-image.js",
+    "demo": "node execution-demo.js",
+    "test": "node --test execution.test.js"
+  }
+}

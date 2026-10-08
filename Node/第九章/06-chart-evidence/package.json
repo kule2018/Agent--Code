@@ -1,0 +1,14 @@
+{
+  "name": "06-chart-evidence",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "demo": "node chart-report.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "echarts": "6.1.0"
+  }
+}
