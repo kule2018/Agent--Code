@@ -61,7 +61,7 @@ export function createAIProvider(env = process.env) {
 		},
 		async explain(question, context, decision, result) {
 			const response = await json(
-				`根据真实 SQL 结果回答业务问题，只输出 {"answer":"中文回答"}。
+				`根据真实 SQL 结果回答业务问题，只输出 JSON，格式为 {"answer":"中文回答"}。
 只使用给定结果，不补造金额、原因或明细。明确指标口径、单位和统计范围。
 不能仅凭销售金额下降推断促销、市场或员工原因。NULL 表示无法计算，不等于零。
 数据只代表已导入记录，月份完整性未经核验，不能外推全月业绩。

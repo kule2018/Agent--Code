@@ -156,6 +156,31 @@ test('模型格式错误与缺失密钥给出错误，不编造 SQL 或答案', 
   assert.throws(() => createAIProvider({}), /DEEPSEEK_API_KEY/)
 })
 
+test('生成 SQL 和解读结果的请求都明确要求 JSON 输出', async (t) => {
+  const requests = []
+  const answer = '已导入的 2026 年 9 月记录中，未扣退款销售额：华东 1599 元，华南 798 元。'
+  // 模拟供应商的 JSON 模式校验，不读取真实密钥或发送云端请求。
+  t.mock.method(globalThis, 'fetch', async (_url, options) => {
+    const body = JSON.parse(options.body)
+    requests.push(body)
+    if (!body.messages.some((message) => /json/i.test(message.content))) {
+      return Response.json({ error: { message: "Prompt must contain the word 'json'" } }, { status: 400 })
+    }
+    const content = requests.length === 1 ? scenarios.regions.decisions[0] : { answer }
+    return Response.json({ choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify(content) } }] })
+  })
+  const provider = createAIProvider({ DEEPSEEK_API_KEY: 'test-only-key' })
+  const report = await answerQuestion(scenarios.regions.question, dataset, provider)
+  assert.equal(requests.length, 2)
+  for (const request of requests) {
+    assert.deepEqual(request.response_format, { type: 'json_object' })
+    assert.match(request.messages[0].content, /json/i)
+  }
+  assert.deepEqual(JSON.parse(requests[1].messages[1].content).result, report.result)
+  assert.equal(report.status, 'answered')
+  assert.equal(report.answer, answer)
+})
+
 test('待核对的数据集不能进入分析', async () => {
   const path = join(dirname(dataset.databasePath), 'profile.json')
   const original = await readFile(path, 'utf8')

@@ -2,72 +2,140 @@ import * as echarts from 'echarts'
 
 /** 本例只开放区域销售额柱状图；不接收任意 ECharts 配置、脚本或额外数值。 */
 export function createChartOption(spec, rows) {
-  if (!spec || Object.keys(spec).sort().join(',') !== 'type,x,y' ||
-      spec.type !== 'bar' || spec.x !== 'region' || spec.y !== 'sales_amount') {
-    throw new Error('图表配置无效：仅支持 bar，x=region，y=sales_amount。')
-  }
-  if (!Array.isArray(rows) || rows.length > 20 || rows.some((row) =>
-    typeof row.region !== 'string' || !row.region || row.region.length > 40 ||
-    typeof row.sales_amount !== 'string' || !/^\d+\.\d{2}$/.test(row.sales_amount) ||
-    !Number.isFinite(Number(row.sales_amount)))) {
-    throw new Error('图表数据无效，或分类超过 20 个，请缩小查询范围。')
-  }
-  return {
-    animation: false,
-    textStyle: { fontFamily: 'PingFang SC, Microsoft YaHei, sans-serif', fontSize: 15 },
-    grid: { left: 74, right: 24, top: 38, bottom: 38 },
-    dataset: { dimensions: ['region', 'sales_amount'], source: rows },
-    xAxis: { type: 'category', axisTick: { show: false }, axisLine: { lineStyle: { color: '#d5d9df' } }, axisLabel: { color: '#353c43' } },
-    yAxis: { type: 'value', name: '元', min: 0, splitLine: { lineStyle: { color: '#edf0f2' } } },
-    series: [{
-      type: spec.type,
-      encode: { x: spec.x, y: spec.y },
-      barMaxWidth: 82,
-      colorBy: 'data',
-      label: { show: true, position: 'top', formatter: (item) => item.data.sales_amount, color: '#252c32', fontSize: 16 }
-    }],
-    color: ['#078578', '#dc9741', '#5681b3']
-  }
+	if (
+		!spec ||
+		Object.keys(spec).sort().join(',') !== 'type,x,y' ||
+		spec.type !== 'bar' ||
+		spec.x !== 'region' ||
+		spec.y !== 'sales_amount'
+	) {
+		throw new Error('图表配置无效：仅支持 bar，x=region，y=sales_amount。')
+	}
+	if (
+		!Array.isArray(rows) ||
+		rows.length > 20 ||
+		rows.some(
+			(row) =>
+				typeof row.region !== 'string' ||
+				!row.region ||
+				row.region.length > 40 ||
+				typeof row.sales_amount !== 'string' ||
+				!/^\d+\.\d{2}$/.test(row.sales_amount) ||
+				!Number.isFinite(Number(row.sales_amount))
+		)
+	) {
+		throw new Error('图表数据无效，或分类超过 20 个，请缩小查询范围。')
+	}
+	return {
+		animation: false,
+		textStyle: {
+			fontFamily: 'PingFang SC, Microsoft YaHei, sans-serif',
+			fontSize: 15
+		},
+		grid: { left: 74, right: 24, top: 38, bottom: 38 },
+		dataset: { dimensions: ['region', 'sales_amount'], source: rows },
+		xAxis: {
+			type: 'category',
+			axisTick: { show: false },
+			axisLine: { lineStyle: { color: '#d5d9df' } },
+			axisLabel: { color: '#353c43' }
+		},
+		yAxis: {
+			type: 'value',
+			name: '元',
+			min: 0,
+			splitLine: { lineStyle: { color: '#edf0f2' } }
+		},
+		series: [
+			{
+				type: spec.type,
+				encode: { x: spec.x, y: spec.y },
+				barMaxWidth: 82,
+				colorBy: 'data',
+				label: {
+					show: true,
+					position: 'top',
+					formatter: (item) => item.data.sales_amount,
+					color: '#252c32',
+					fontSize: 16
+				}
+			}
+		],
+		color: ['#078578', '#dc9741', '#5681b3']
+	}
 }
 
-const escape = (text) => String(text).replace(/[&<>"']/g, (char) => ({
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-}[char]))
+const escape = (text) =>
+	String(text).replace(
+		/[&<>"']/g,
+		(char) =>
+			({
+				'&': '&amp;',
+				'<': '&lt;',
+				'>': '&gt;',
+				'"': '&quot;',
+				"'": '&#39;'
+			})[char]
+	)
 
 /** 结论直接使用结果表里的金额；本例不让模型另写数字或推测销售原因。 */
 export function conclusion(rows) {
-  if (!rows.length) return '当前筛选条件下没有记录，无法据此判断销售额为 0。'
-  const highest = rows.reduce((max, row) => Number(row.sales_amount) > Number(max.sales_amount) ? row : max)
-  const regions = rows.filter((row) => row.sales_amount === highest.sales_amount).map((row) => row.region).join('、')
-  return rows.length === 1
-    ? `本次已导入记录中，${highest.region}未扣退款销售额为 ${highest.sales_amount} 元。`
-    : `本次已导入记录中，${regions}未扣退款销售额最高，为 ${highest.sales_amount} 元。`
+	if (!rows.length) return '当前筛选条件下没有记录，无法据此判断销售额为 0。'
+	const highest = rows.reduce((max, row) =>
+		Number(row.sales_amount) > Number(max.sales_amount) ? row : max
+	)
+	const regions = rows
+		.filter((row) => row.sales_amount === highest.sales_amount)
+		.map((row) => row.region)
+		.join('、')
+	return rows.length === 1
+		? `本次已导入记录中，${highest.region}未扣退款销售额为 ${highest.sales_amount} 元。`
+		: `本次已导入记录中，${regions}未扣退款销售额最高，为 ${highest.sales_amount} 元。`
 }
 
 /** 在 Node 中生成 SVG 和完整 HTML；双击报告即可查看，无需联网或启动 Web 服务。 */
 export function renderReport(report) {
-  let svg = ''
-  if (report.rows.length) {
-    const chart = echarts.init(null, null, { renderer: 'svg', ssr: true, width: 800, height: 300 })
-    try {
-      chart.setOption(createChartOption(report.chartSpec, report.rows))
-      svg = chart.renderToSVGString()
-    } finally {
-      chart.dispose()
-    }
-  }
-  const resultRows = report.rows.map((row, index) => `<tr><td>${escape(row.region)}</td><td class="number">${escape(row.sales_amount)}</td><td><a href="#evidence-${index}">查看明细</a></td></tr>`).join('')
-  const evidence = report.rows.map((row, index) => {
-    const details = report.details.filter((detail) => detail.region === row.region)
-    const tableRows = details.map((detail) => `<tr><td>${detail.source_row}</td><td>${escape(detail.line_id)}</td><td>${escape(detail.sold_at)}</td><td class="number">${escape(detail.paid_amount)}</td></tr>`).join('')
-    return `<details class="evidence" id="evidence-${index}" open>
+	let svg = ''
+	if (report.rows.length) {
+		const chart = echarts.init(null, null, {
+			renderer: 'svg',
+			ssr: true,
+			width: 800,
+			height: 300
+		})
+		try {
+			chart.setOption(createChartOption(report.chartSpec, report.rows))
+			svg = chart.renderToSVGString()
+		} finally {
+			chart.dispose()
+		}
+	}
+	const resultRows = report.rows
+		.map(
+			(row, index) =>
+				`<tr><td>${escape(row.region)}</td><td class="number">${escape(row.sales_amount)}</td><td><a href="#evidence-${index}">查看明细</a></td></tr>`
+		)
+		.join('')
+	const evidence = report.rows
+		.map((row, index) => {
+			const details = report.details.filter(
+				(detail) => detail.region === row.region
+			)
+			const tableRows = details
+				.map(
+					(detail) =>
+						`<tr><td>${detail.source_row}</td><td>${escape(detail.line_id)}</td><td>${escape(detail.sold_at)}</td><td class="number">${escape(detail.paid_amount)}</td></tr>`
+				)
+				.join('')
+			return `<details class="evidence" id="evidence-${index}" open>
       <summary>${escape(row.region)} <span>${escape(row.sales_amount)} 元 · ${details.length} 条明细</span></summary>
       <p class="muted">${escape(report.dataset.sourceFile)} / ${escape(report.dataset.sheet)}</p>
       <div class="table-scroll"><table><thead><tr><th>Excel 行号</th><th>明细编号</th><th>销售日期</th><th class="number">实付金额（元）</th></tr></thead><tbody>${tableRows}</tbody></table></div>
       <p class="equation">${details.map((detail) => escape(detail.paid_amount)).join(' + ')} = ${escape(row.sales_amount)} 元</p>
     </details>`
-  }).join('')
-  return `<!doctype html>
+		})
+		.join('')
+	return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(report.filters.month)} 区域销售分析</title>
 <style>
 :root{color-scheme:light;font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:#252c32;background:#fff;font-size:15px;letter-spacing:0}

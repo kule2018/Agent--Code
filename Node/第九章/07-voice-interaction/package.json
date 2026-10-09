@@ -1,0 +1,16 @@
+{
+  "name": "07-voice-interaction",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env server.js",
+    "test": "node --test test/*.test.js",
+    "test:integration": "node test/sandbox-check.js"
+  },
+  "dependencies": {
+    "express": "5.2.1",
+    "lucide": "1.53.0"
+  }
+}

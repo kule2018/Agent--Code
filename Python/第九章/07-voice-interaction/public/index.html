@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>语音数据分析</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/vendor/lucide.js"></script>
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand"><i data-lucide="audio-lines"></i><strong>语音数据分析</strong></div>
+    <span class="environment">销售样本 · 本地运行</span>
+  </header>
+  <main>
+    <div class="heading"><div><p class="eyebrow">销售数据</p><h1>这次想了解什么？</h1></div><span class="period">2026 / 08—09</span></div>
+    <ol class="steps" aria-label="处理流程"><li id="step-record">1 <span>录音转写</span></li><li id="step-ask">2 <span>确认与分析</span></li><li id="step-speak">3 <span>回答朗读</span></li></ol>
+    <section class="question-section" aria-labelledby="question-label">
+      <div class="section-heading"><label id="question-label" for="question">问题</label><button id="example" class="quiet" title="填入示例问题"><i data-lucide="file-input"></i>填入示例</button></div>
+      <textarea id="question" maxlength="2000" placeholder="仅按已导入记录，2026 年 9 月各区域的未扣退款销售额分别是多少？" rows="4"></textarea>
+      <div class="actions"><button id="record" class="secondary"><i data-lucide="mic"></i><span>开始录音</span></button><span id="record-status" role="status">未录音</span><button id="ask" class="primary" disabled><i data-lucide="send"></i>确认并分析</button></div>
+    </section>
+    <p id="status" class="status" role="status" aria-live="polite">等待问题</p>
+    <section id="result" class="result" hidden aria-labelledby="result-label">
+      <div class="section-heading"><h2 id="result-label">分析结果</h2><button id="speak" class="secondary" disabled><i data-lucide="volume-2"></i>朗读回答</button></div>
+      <p id="answer"></p>
+      <audio id="player" controls hidden preload="none" aria-label="回答音频"></audio>
+      <p id="speech-note" hidden></p>
+      <p id="warning" class="warning"></p>
+      <div id="rows-section" hidden><h3>数据库返回</h3><div class="table-scroll"><table id="rows"></table></div></div>
+      <details id="evidence"><summary>查询依据</summary><dl><dt>统计指标</dt><dd id="metric"></dd><dt>范围</dt><dd id="scope"></dd><dt>数据版本</dt><dd id="version"></dd></dl><pre id="sql"></pre></details>
+    </section>
+  </main>
+  <footer>录音将发送至百炼；问题与必要查询结果将发送至 DeepSeek。云端调用会产生费用。</footer>
+</body>
+</html>
