@@ -1,0 +1,1 @@
+{"name":"analysis-sandbox","private":true,"type":"module","dependencies":{"@duckdb/node-api":"1.5.6-r.1"}}

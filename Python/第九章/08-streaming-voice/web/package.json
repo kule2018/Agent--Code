@@ -1,0 +1,23 @@
+{
+  "name": "streaming-voice-python-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.20" },
+  "scripts": {
+    "dev": "vite --config vite.config.ts",
+    "check": "vue-tsc -p tsconfig.json --noEmit",
+    "build": "npm run check && vite build --config vite.config.ts",
+    "preview": "vite preview --config vite.config.ts",
+    "test": "tsx --test ../test/web.test.ts"
+  },
+  "dependencies": { "vue": "3.5.43", "@lucide/vue": "1.54.0" },
+  "devDependencies": {
+    "@types/node": "22.18.1",
+    "@vitejs/plugin-vue": "6.0.9",
+    "vite": "7.3.7",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.3.12",
+    "tsx": "4.20.5"
+  }
+}

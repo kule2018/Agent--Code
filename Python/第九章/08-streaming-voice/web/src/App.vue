@@ -212,7 +212,7 @@ function connect() {
 		status.value = '连接已断开'
 	}
 	socket.onerror = () => {
-		warning.value = '服务连接失败，请检查 NestJS 终端是否启动成功'
+		warning.value = '服务连接失败，请检查 Python 服务终端是否启动成功'
 	}
 }
 onMounted(() => {

@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "module": "NodeNext", "moduleResolution": "NodeNext", "strict": true,
+    "esModuleInterop": true, "experimentalDecorators": true, "skipLibCheck": true,
+    "allowJs": true, "resolveJsonModule": true, "types": ["node", "multer"], "noEmit": true
+  },
+  "include": ["server/**/*.ts", "shared/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"]
+}
